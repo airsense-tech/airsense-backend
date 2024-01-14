@@ -10,7 +10,6 @@ on:
       - main
       - dev
       - release/*
-      - feature/*
 
 # Predefined environment variables.
 env:
@@ -108,4 +107,4 @@ jobs:
           provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm/v5,linux/arm/v7,linux/arm64/v8
