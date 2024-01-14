@@ -1,5 +1,5 @@
 import { validate } from 'class-validator';
-import { Collection } from 'mongodb';
+import { Collection, WithId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import { HttpRequest, IHttpResponse } from '../../core/api';
 import { Log } from '../../core/logging';
@@ -72,15 +72,18 @@ export class CreateDeviceCodeHandler implements IRouterHandler {
 
     const user = this.authenticationHelper.verifyRequest<{ userId: string; rights: UserRights[] }>(request);
     if (!user) {
+      Log.warn('user not authenticated ...');
       return Unauthorized();
     }
 
     const isAuthorized = this.authorizationHelper.isEntitledWith(user.rights, UserRights.CREATE_DEVICE);
     if (!isAuthorized) {
+      Log.warn('user not authorized ...');
       return Forbidden();
     }
 
     if (!request.body) {
+      Log.warn('missing request body ...');
       return IllegalRequestBodyf('Expected a request body.');
     }
 
@@ -89,13 +92,21 @@ export class CreateDeviceCodeHandler implements IRouterHandler {
 
     const errors = await validate(info);
     if (errors.length > 0) {
+      Log.warn('request body validation failed ...');
       return IllegalRequestBodyf(errors);
     }
 
-    const device = await this.deviceCollection.findOne({ _id: info.deviceId, _userId: user.userId });
+    let device: WithId<DeviceInfo> | null;
+
+    try {
+      device = await this.deviceCollection.findOne({ _id: info.deviceId, _userId: user.userId });
+    } catch (error) {
+      Log.error('failed to query collection:', error);
+      return InternalServerError();
+    }
 
     if (!device) {
-      Log.warn('device not found');
+      Log.warn('device not found ...');
       return ResourceNotFoundf('Device not found.');
     }
 

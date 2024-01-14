@@ -55,15 +55,18 @@ export class CreateDataPointHandler implements IRouterHandler {
       request,
     );
     if (!user) {
+      Log.warn('user not authenticated ...');
       return Unauthorized();
     }
 
     const isAuthorized = this.authorizationHelper.isEntitledWith(user.rights, UserRights.CREATE_DATA_POINT);
     if (!isAuthorized) {
+      Log.warn('user not authorized ...');
       return Forbidden();
     }
 
     if (!request.body) {
+      Log.warn('missing request body ...');
       return IllegalRequestBodyf('Expected a request body.');
     }
 
@@ -72,6 +75,7 @@ export class CreateDataPointHandler implements IRouterHandler {
 
     const errors = await validate(info);
     if (errors.length > 0) {
+      Log.warn('request body validation failed ...');
       return IllegalRequestBodyf(errors);
     }
 

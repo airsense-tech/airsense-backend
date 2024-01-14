@@ -1,11 +1,11 @@
 import { validate } from 'class-validator';
 import sha256 from 'crypto-js/sha256';
-import { Collection } from 'mongodb';
+import { Collection, WithId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import { HttpRequest, IHttpResponse } from '../../core/api';
 import { Log } from '../../core/logging';
 import { IRouterHandler } from '../../core/routing';
-import { IllegalRequestBodyf } from '../../domain/responses';
+import { IllegalRequestBodyf, InternalServerError } from '../../domain/responses';
 import { UserInfo } from '../../models/user.info';
 import { OnRegisterInfo } from './registration.request';
 
@@ -47,6 +47,7 @@ export class RegistrationHandler implements IRouterHandler {
     Log.info(request.method, request.path);
 
     if (!request.body) {
+      Log.warn('missing request body ...');
       return IllegalRequestBodyf('Expected request body.');
     }
 
@@ -55,12 +56,21 @@ export class RegistrationHandler implements IRouterHandler {
 
     const errors = await validate(info);
     if (errors.length > 0) {
+      Log.warn('request body validation failed ...');
       return IllegalRequestBodyf(errors);
     }
 
-    const existingUser = await this.collection.findOne({ email: info.email });
+    let existingUser: WithId<UserInfo> | null;
+
+    try {
+      existingUser = await this.collection.findOne({ email: info.email });
+    } catch (error) {
+      Log.error('failed to query collection:', error);
+      return InternalServerError();
+    }
 
     if (existingUser) {
+      Log.warn('user already exists ...');
       return IllegalRequestBodyf('User already exists.');
     }
 
@@ -75,12 +85,11 @@ export class RegistrationHandler implements IRouterHandler {
       createdOn: new Date(),
     };
 
-    const result = await this.collection.insertOne(user);
-
-    if (!result.acknowledged) {
-      return {
-        statusCode: 500,
-      };
+    try {
+      await this.collection.insertOne(user);
+    } catch (error) {
+      Log.error('failed to create user:', error);
+      return InternalServerError();
     }
 
     return {

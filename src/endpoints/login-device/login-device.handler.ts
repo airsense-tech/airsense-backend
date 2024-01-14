@@ -1,5 +1,5 @@
 import { validate } from 'class-validator';
-import { Collection } from 'mongodb';
+import { Collection, WithId } from 'mongodb';
 import { HttpRequest, IHttpResponse } from '../../core/api';
 import { Log } from '../../core/logging';
 import { IRouterHandler } from '../../core/routing';
@@ -45,6 +45,7 @@ export class LoginDeviceHandler implements IRouterHandler {
     Log.info(request.method, request.path);
 
     if (!request.body) {
+      Log.warn('missing request body ...');
       return IllegalRequestBodyf('Expected a request body.');
     }
 
@@ -53,13 +54,21 @@ export class LoginDeviceHandler implements IRouterHandler {
 
     const errors = await validate(info);
     if (errors.length > 0) {
+      Log.warn('request body validation failed ...');
       return IllegalRequestBodyf(errors);
     }
 
-    const deviceCode = await this.collection.findOne({ code: info.code });
+    let deviceCode: WithId<DeviceCodeInfo> | null;
+
+    try {
+      deviceCode = await this.collection.findOne({ code: info.code });
+    } catch (error) {
+      Log.error('failed to query collection:', error);
+      return InternalServerError();
+    }
 
     if (!deviceCode) {
-      Log.warn('device code not found');
+      Log.warn('device code not found ...');
       return ResourceNotFoundf('Device registration code not found.');
     }
 

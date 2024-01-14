@@ -53,15 +53,18 @@ export class CreateDeviceHandler implements IRouterHandler {
 
     const user = this.authenticationHelper.verifyRequest<{ userId: string; rights: UserRights[] }>(request);
     if (!user) {
+      Log.warn('user not authenticated ...');
       return Unauthorized();
     }
 
     const isAuthorized = this.authorizationHelper.isEntitledWith(user.rights, UserRights.CREATE_DEVICE);
     if (!isAuthorized) {
+      Log.warn('user not authorized ...');
       return Forbidden();
     }
 
     if (!request.body) {
+      Log.warn('missing request body ...');
       return IllegalRequestBodyf('Expected a request body.');
     }
 
@@ -70,6 +73,7 @@ export class CreateDeviceHandler implements IRouterHandler {
 
     const errors = await validate(info);
     if (errors.length > 0) {
+      Log.warn('request body validation failed ...');
       return IllegalRequestBodyf(errors);
     }
 

@@ -1,12 +1,12 @@
 import { validate } from 'class-validator';
 import sha256 from 'crypto-js/sha256';
-import { Collection } from 'mongodb';
+import { Collection, WithId } from 'mongodb';
 import { HttpRequest, IHttpResponse } from '../../core/api';
 import { Log } from '../../core/logging';
 import { IRouterHandler } from '../../core/routing';
 import { AuthenticationHelper } from '../../domain/auth/authentication-helper';
 import { UserRights } from '../../domain/auth/user-rights';
-import { IllegalRequestBodyf, ResourceNotFoundf } from '../../domain/responses/functors';
+import { IllegalRequestBodyf, InternalServerError, ResourceNotFoundf } from '../../domain/responses/functors';
 import { UserInfo } from '../../models/user.info';
 import { OnLoginInfo } from './login.request';
 
@@ -46,6 +46,7 @@ export class LoginHandler implements IRouterHandler {
     Log.info(request.method, request.path);
 
     if (!request.body) {
+      Log.warn('missing request body ...');
       return IllegalRequestBodyf('Expected a request body.');
     }
 
@@ -54,17 +55,28 @@ export class LoginHandler implements IRouterHandler {
 
     const errors = await validate(info);
     if (errors.length > 0) {
+      Log.warn('request body validation failed ...');
       return IllegalRequestBodyf(errors);
     }
 
     const password = sha256(info.password).toString();
-    const existingUser = await this.collection.findOne({ email: info.email });
+
+    let existingUser: WithId<UserInfo> | null;
+
+    try {
+      existingUser = await this.collection.findOne({ email: info.email });
+    } catch (error) {
+      Log.error('failed to query collection:', error);
+      return InternalServerError();
+    }
 
     if (!existingUser) {
+      Log.warn('user not found ...');
       return ResourceNotFoundf(`User does not exist.`);
     }
 
     if (existingUser.password !== password) {
+      Log.warn('email or password mismatch ...');
       return IllegalRequestBodyf(`Email or password incorrect.`);
     }
 
