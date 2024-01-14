@@ -1,0 +1,28 @@
+{
+  "name": "AirSense Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers-contrib/features/act:1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "eamodio.gitlens",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.vscode-typescript-next",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "DavidAnson.vscode-markdownlint",
+        "redhat.vscode-yaml",
+        "github.vscode-github-actions",
+        "GitHub.copilot",
+        "GitHub.copilot-chat"
+      ]
+    }
+  },
+  "forwardPorts": [7325],
+  "runArgs": ["--network=host", "--name=air-sense-dev-container"],
+  "postCreateCommand": "npm install"
+}
