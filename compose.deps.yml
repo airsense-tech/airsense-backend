@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: air-mongo
+    volumes:
+      - air-data:/data/db
+    networks:
+      - air-sense
+    ports:
+      - 27017:27017
+
+networks:
+  air-sense:
+    name: air-network
+    driver: bridge
+
+volumes:
+  air-data:
+    name: air-data

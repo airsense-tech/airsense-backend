@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  air-sense:
+    build: .
+    container_name: air-sense
+    environment:
+      - AIR_SENSE_PORT=9999
+      - AIR_SENSE_MONGO_URL=mongodb://air-mongo:27017
+    networks:
+      - air-sense
+    ports:
+      - 7325:7325
+
+  mongo:
+    image: mongo:latest
+    container_name: air-mongo
+    volumes:
+      - air-data:/data/db
+    networks:
+      - air-sense
+    ports:
+      - 27017:27017
+
+networks:
+  air-sense:
+    name: air-network
+    driver: bridge
+
+volumes:
+  air-data:
+    name: air-data
