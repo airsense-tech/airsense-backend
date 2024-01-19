@@ -7,6 +7,7 @@ import { CreateDataPointHandler, LoginHandler, RegistrationHandler } from './end
 import { CreateDeviceCodeHandler } from './endpoints/create-device-code/create-device-code.handler';
 import { CreateDeviceHandler } from './endpoints/create-device/create-device.handler';
 import { GetDataPointHandler } from './endpoints/get-data-points/get-data-points.handler';
+import { GetSensorDataHandler } from './endpoints/get-sensor-data/get-sensor-data.handler';
 import { LoginDeviceHandler } from './endpoints/login-device/login-device.handler';
 import { DataPointInfo } from './models/data-point.info';
 import { DeviceCodeInfo } from './models/device-code.info';
@@ -67,8 +68,14 @@ async function main() {
     new LoginDeviceHandler(deviceCodeCollection, authenticationHelper),
   );
 
-  router.route(HttpMethod.GET, '/api/v1/data', new GetDataPointHandler(dataCollection, authenticationHelper));
   router.route(HttpMethod.POST, '/api/v1/data', new CreateDataPointHandler(dataCollection, authenticationHelper));
+
+  router.route(HttpMethod.GET, '/api/v1/sensors/avg', new GetDataPointHandler(dataCollection, authenticationHelper));
+  router.route(
+    HttpMethod.GET,
+    '/api/v1/sensors/latest',
+    new GetSensorDataHandler(dataCollection, authenticationHelper),
+  );
 
   router.run(port, () => {
     Log.info(`server up and running on port: ${port}`);
