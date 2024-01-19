@@ -3,13 +3,13 @@ import { HttpRequest, IHttpResponse } from '../../core/api';
 import { Log } from '../../core/logging';
 import { IRouterHandler } from '../../core/routing';
 import { AuthenticationHelper } from '../../domain/auth/authentication-helper';
-import { InternalServerError, Unauthorized } from '../../domain/responses';
+import { IllegalRequestBodyf, InternalServerError, Unauthorized } from '../../domain/responses';
 import { DataPointInfo } from '../../models/data-point.info';
 
 /**
  * The get datapoint endpoint handler.
  */
-export class GetDataPointHandler implements IRouterHandler {
+export class GetSensorDataHandler implements IRouterHandler {
   /**
    * The device collection.
    */
@@ -52,53 +52,54 @@ export class GetDataPointHandler implements IRouterHandler {
       return Unauthorized();
     }
 
-    const filter = request.queryParam('filter');
-    const projection = this.getProjectionFromFilter(filter);
-
-    const oneDayAgo = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+    if (!request.body) {
+      Log.warn('missing request body ...');
+      return IllegalRequestBodyf('Expected a request body.');
+    }
 
     const pipeline = [
       {
         $match: {
           _userId: user.userId,
-          createdOn: { $gte: oneDayAgo },
         },
       },
       {
-        $project: {
-          _id: 1,
-          humidity: 1,
-          pressure: 1,
-          temperature: 1,
-          year: { $year: '$createdOn' },
-          month: { $month: '$createdOn' },
-          day: { $dayOfMonth: '$createdOn' },
-          hour: { $hour: '$createdOn' },
+        $lookup: {
+          from: 'devices',
+          localField: '_deviceId',
+          foreignField: '_id',
+          as: 'device',
+        },
+      },
+      {
+        $unwind: {
+          path: '$device',
+          preserveNullAndEmptyArrays: false,
         },
       },
       {
         $group: {
-          _id: {
-            year: '$year',
-            month: '$month',
-            day: '$day',
-            hour: '$hour',
-          },
-          humidity: { $avg: '$humidity' },
-          pressure: { $avg: '$pressure' },
-          temperature: { $avg: '$temperature' },
+          _id: '$_deviceId',
+          device: { $first: '$device.name' },
+          humidity: { $last: '$humidity' },
+          pressure: { $last: '$pressure' },
+          temperature: { $last: '$temperature' },
+          createdOn: { $last: '$createdOn' },
         },
       },
       {
         $project: {
           _id: 0,
-          hour: '$_id.hour',
-          ...projection,
+          device: '$device',
+          humidity: '$humidity',
+          pressure: '$pressure',
+          temperature: '$temperature',
+          createdOn: '$createdOn',
         },
       },
       {
         $sort: {
-          hour: 1,
+          'device.name': 1,
         },
       },
     ];
@@ -117,36 +118,5 @@ export class GetDataPointHandler implements IRouterHandler {
       statusCode: 200,
       body: documents,
     };
-  }
-
-  /**
-   * Constructs a MongoDB projection object from the filter query parameter.
-   *
-   * @param filter The value of the filter query parameter.
-   *
-   * @returns A MongoDB projection object.
-   */
-  private getProjectionFromFilter(filter: string[] | undefined): { [key: string]: number } {
-    const projection: { [key: string]: number } = {};
-
-    if (filter?.includes('humidity')) {
-      projection.humidity = 1;
-    }
-
-    if (filter?.includes('pressure')) {
-      projection.pressure = 1;
-    }
-
-    if (filter?.includes('temperature')) {
-      projection.temperature = 1;
-    }
-
-    if (!filter) {
-      projection.humidity = 1;
-      projection.pressure = 1;
-      projection.temperature = 1;
-    }
-
-    return projection;
   }
 }
