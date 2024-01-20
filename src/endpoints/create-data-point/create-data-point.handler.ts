@@ -86,6 +86,7 @@ export class CreateDataPointHandler implements IRouterHandler {
       humidity: info.humidity,
       pressure: info.pressure,
       temperature: info.temp,
+      gasResistance: info.gasResistance,
       createdOn: new Date(),
     };
 
