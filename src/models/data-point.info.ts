@@ -18,12 +18,12 @@ export interface DataPointInfo {
   _deviceId: string;
 
   /**
-   * The current humidity (in percentage).
+   * The current humidity (in percent).
    */
   humidity: number | undefined;
 
   /**
-   * The current air pressure.
+   * The current air pressure (in pascal).
    */
   pressure: number | undefined;
 
@@ -31,6 +31,11 @@ export interface DataPointInfo {
    * The current temperature (in degrees celcius).
    */
   temperature: number | undefined;
+
+  /**
+   * The current gas resistance (in ohms).
+   */
+  gasResistance: number | undefined;
 
   /**
    * The time when this data point was created.

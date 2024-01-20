@@ -94,7 +94,13 @@ export class RegistrationHandler implements IRouterHandler {
 
     return {
       statusCode: 200,
-      body: user,
+      body: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        createdOn: user.createdOn,
+      },
     };
   }
 }

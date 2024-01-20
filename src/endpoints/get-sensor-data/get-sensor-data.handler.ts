@@ -47,7 +47,7 @@ export class GetSensorDataHandler implements IRouterHandler {
       return Unauthorized();
     }
 
-    if (!user.userId || !user.deviceId) {
+    if (!user.userId) {
       Log.warn('user not authorized ...');
       return Unauthorized();
     }
