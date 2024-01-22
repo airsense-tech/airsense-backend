@@ -4,6 +4,11 @@
  */
 export enum UserRights {
   /**
+   * The user is allowed to read all devices.
+   */
+  READ_DEVICE = 'read-device',
+
+  /**
    * The user is allowed to create new devices.
    */
   CREATE_DEVICE = 'create-device',

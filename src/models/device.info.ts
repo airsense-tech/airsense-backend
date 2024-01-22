@@ -8,7 +8,7 @@ export interface DeviceInfo {
   _id: string;
 
   /**
-   * The user this device belongs to.F
+   * The user this device belongs to.
    */
   _userId: string;
 

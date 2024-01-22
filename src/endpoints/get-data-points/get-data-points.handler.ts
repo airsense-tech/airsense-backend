@@ -70,6 +70,7 @@ export class GetDataPointHandler implements IRouterHandler {
           humidity: 1,
           pressure: 1,
           temperature: 1,
+          gasResistance: 1,
           year: { $year: '$createdOn' },
           month: { $month: '$createdOn' },
           day: { $dayOfMonth: '$createdOn' },
@@ -87,6 +88,7 @@ export class GetDataPointHandler implements IRouterHandler {
           humidity: { $avg: '$humidity' },
           pressure: { $avg: '$pressure' },
           temperature: { $avg: '$temperature' },
+          gasResistance: { $avg: '$gasResistance' },
         },
       },
       {
@@ -129,22 +131,29 @@ export class GetDataPointHandler implements IRouterHandler {
   private getProjectionFromFilter(filter: string[] | undefined): { [key: string]: number } {
     const projection: { [key: string]: number } = {};
 
-    if (filter?.includes('humidity')) {
-      projection.humidity = 1;
-    }
-
-    if (filter?.includes('pressure')) {
-      projection.pressure = 1;
-    }
-
-    if (filter?.includes('temperature')) {
-      projection.temperature = 1;
-    }
-
     if (!filter) {
       projection.humidity = 1;
       projection.pressure = 1;
       projection.temperature = 1;
+      projection.gasResistance = 1;
+
+      return projection;
+    }
+
+    if (filter.includes('humidity')) {
+      projection.humidity = 1;
+    }
+
+    if (filter.includes('pressure')) {
+      projection.pressure = 1;
+    }
+
+    if (filter.includes('temperature')) {
+      projection.temperature = 1;
+    }
+
+    if (filter.includes('gasResistance')) {
+      projection.gasResistance = 1;
     }
 
     return projection;
