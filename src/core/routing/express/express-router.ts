@@ -1,4 +1,5 @@
 import bodyParser from 'body-parser';
+import cors from 'cors';
 import express from 'express';
 import { HttpMethod } from '../../api';
 import { IRouter } from '../router';
@@ -30,6 +31,7 @@ export class ExpressRouter implements IRouter {
    */
   constructor() {
     this.app = express();
+    this.app.use(cors());
     this.requestTransformer = new ExpressRequestTransformer();
     this.responseTransformer = new ExpressResponseTransformer();
   }

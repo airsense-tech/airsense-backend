@@ -7,6 +7,7 @@ import { CreateDataPointHandler, LoginHandler, RegistrationHandler } from './end
 import { CreateDeviceCodeHandler } from './endpoints/create-device-code/create-device-code.handler';
 import { CreateDeviceHandler } from './endpoints/create-device/create-device.handler';
 import { GetDataPointHandler } from './endpoints/get-data-points/get-data-points.handler';
+import { GetDevicesHandler } from './endpoints/get-devices/get-devices.handler';
 import { GetSensorDataHandler } from './endpoints/get-sensor-data/get-sensor-data.handler';
 import { LoginDeviceHandler } from './endpoints/login-device/login-device.handler';
 import { DataPointInfo } from './models/data-point.info';
@@ -56,6 +57,7 @@ async function main() {
   router.route(HttpMethod.POST, '/api/v1/users/register', new RegistrationHandler(userCollection));
   router.route(HttpMethod.POST, '/api/v1/users/login', new LoginHandler(userCollection, authenticationHelper));
 
+  router.route(HttpMethod.GET, '/api/v1/devices', new GetDevicesHandler(deviceCollection, authenticationHelper));
   router.route(HttpMethod.POST, '/api/v1/devices', new CreateDeviceHandler(deviceCollection, authenticationHelper));
   router.route(
     HttpMethod.POST,
