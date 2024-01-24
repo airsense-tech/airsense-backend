@@ -14,6 +14,11 @@ export enum UserRights {
   CREATE_DEVICE = 'create-device',
 
   /**
+   * The user is allowed to delete devices.
+   */
+  DELETE_DEVICE = 'delete-device',
+
+  /**
    * The user is allowed to create new data points.
    */
   CREATE_DATA_POINT = 'create-data-point',

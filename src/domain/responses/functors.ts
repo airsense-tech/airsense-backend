@@ -39,6 +39,16 @@ export function IllegalRequestBodyf(message: unknown): IHttpResponse {
   };
 }
 
+export function IllegalPathParamf(message: unknown): IHttpResponse {
+  return {
+    statusCode: 400,
+    body: {
+      message: 'Illegal path parameter.',
+      details: message,
+    },
+  };
+}
+
 export function ResourceNotFound(): IHttpResponse {
   return {
     statusCode: 404,

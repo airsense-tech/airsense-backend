@@ -82,7 +82,7 @@ export class LoginHandler implements IRouterHandler {
 
     const payload = {
       userId: existingUser._id,
-      rights: [UserRights.READ_DEVICE, UserRights.CREATE_DEVICE],
+      rights: [UserRights.READ_DEVICE, UserRights.CREATE_DEVICE, UserRights.DELETE_DEVICE],
     };
 
     const token = this.authenticationHelper.sign(payload, '24h');

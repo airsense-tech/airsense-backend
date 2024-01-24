@@ -7,7 +7,7 @@ export class OnCreateDeviceInfo {
   /**
    * The name of the device.
    */
-  @MinLength(4)
+  @MinLength(3)
   @MaxLength(99)
   public name: string | undefined;
 }

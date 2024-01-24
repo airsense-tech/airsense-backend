@@ -1,9 +1,7 @@
-import { Collection, WithId } from 'mongodb';
-import { v4 as uuidv4 } from 'uuid';
+import { Collection } from 'mongodb';
 import { HttpRequest, IHttpResponse } from '../../core/api';
 import { Log } from '../../core/logging';
 import { IRouterHandler } from '../../core/routing';
-import { StringUtils } from '../../core/utils/string-utils';
 import { AuthenticationHelper } from '../../domain/auth/authentication-helper';
 import { AuthorizationHelper } from '../../domain/auth/authorization-helper';
 import { UserRights } from '../../domain/auth/user-rights';
@@ -12,25 +10,24 @@ import {
   IllegalPathParamf,
   IllegalRequestBodyf,
   InternalServerError,
-  ResourceNotFoundf,
   Unauthorized,
 } from '../../domain/responses';
-import { DeviceCodeInfo } from '../../models/device-code.info';
+import { DataPointInfo } from '../../models/data-point.info';
 import { DeviceInfo } from '../../models/device.info';
 
 /**
- * Responsible for generating device registration codes.
+ * The delete device endpoint handler.
  */
-export class CreateDeviceCodeHandler implements IRouterHandler {
+export class DeleteDeviceHandler implements IRouterHandler {
   /**
    * The device collection.
    */
   private readonly deviceCollection: Collection<DeviceInfo>;
 
   /**
-   * The device code collection.
+   * The data collection.
    */
-  private readonly deviceCodeCollection: Collection<DeviceCodeInfo>;
+  private readonly dataCollection: Collection<DataPointInfo>;
 
   /**
    * The authentication helper.
@@ -46,16 +43,15 @@ export class CreateDeviceCodeHandler implements IRouterHandler {
    * Constructor.
    *
    * @param deviceCollection The device collection.
-   * @param deviceCodeCollection The device code collection.
    * @param authenticationHelper The authentication helper.
    */
   constructor(
     deviceCollection: Collection<DeviceInfo>,
-    deviceCodeCollection: Collection<DeviceCodeInfo>,
+    dataCollection: Collection<DataPointInfo>,
     authenticationHelper: AuthenticationHelper,
   ) {
     this.deviceCollection = deviceCollection;
-    this.deviceCodeCollection = deviceCodeCollection;
+    this.dataCollection = dataCollection;
     this.authenticationHelper = authenticationHelper;
   }
 
@@ -75,7 +71,7 @@ export class CreateDeviceCodeHandler implements IRouterHandler {
       return Unauthorized();
     }
 
-    const isAuthorized = this.authorizationHelper.isEntitledWith(user.rights, UserRights.CREATE_DEVICE);
+    const isAuthorized = this.authorizationHelper.isEntitledWith(user.rights, UserRights.DELETE_DEVICE);
     if (!isAuthorized) {
       Log.warn('user not authorized ...');
       return Forbidden();
@@ -92,38 +88,16 @@ export class CreateDeviceCodeHandler implements IRouterHandler {
       return IllegalPathParamf('id');
     }
 
-    let device: WithId<DeviceInfo> | null;
-
     try {
-      device = await this.deviceCollection.findOne({ _id: deviceId, _userId: user.userId });
+      await this.deviceCollection.deleteOne({ _id: deviceId });
+      await this.dataCollection.deleteMany({ _userId: user.userId, _deviceId: deviceId });
     } catch (error) {
-      Log.error('failed to query collection:', error);
-      return InternalServerError();
-    }
-
-    if (!device) {
-      Log.warn('device not found ...');
-      return ResourceNotFoundf('Device not found.');
-    }
-
-    const deviceCode: DeviceCodeInfo = {
-      _id: uuidv4(),
-      _userId: user.userId,
-      _deviceId: device._id,
-      code: StringUtils.random(8),
-      createdOn: new Date(),
-    };
-
-    try {
-      await this.deviceCodeCollection.insertOne(deviceCode);
-    } catch (error) {
-      Log.error('failed to create device code:', error);
+      Log.error('failed to delete device:', error);
       return InternalServerError();
     }
 
     return {
       statusCode: 200,
-      body: deviceCode,
     };
   }
 }

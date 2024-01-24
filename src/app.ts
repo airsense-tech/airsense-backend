@@ -6,7 +6,10 @@ import { AuthenticationHelper } from './domain/auth/authentication-helper';
 import { CreateDataPointHandler, LoginHandler, RegistrationHandler } from './endpoints';
 import { CreateDeviceCodeHandler } from './endpoints/create-device-code/create-device-code.handler';
 import { CreateDeviceHandler } from './endpoints/create-device/create-device.handler';
+import { DeleteDeviceHandler } from './endpoints/delete-device/delete-device.handler';
 import { GetDataPointHandler } from './endpoints/get-data-points/get-data-points.handler';
+import { GetDeviceDataHandler } from './endpoints/get-device-data/get-device-data.handler';
+import { GetDeviceHandler } from './endpoints/get-device/get-device.handler';
 import { GetDevicesHandler } from './endpoints/get-devices/get-devices.handler';
 import { GetSensorDataHandler } from './endpoints/get-sensor-data/get-sensor-data.handler';
 import { LoginDeviceHandler } from './endpoints/login-device/login-device.handler';
@@ -42,7 +45,7 @@ async function main() {
     return;
   }
 
-  const db = client.db('air-sense');
+  const db = client.db('airsense');
 
   const userCollection = db.collection<UserInfo>('users');
   const deviceCollection = db.collection<DeviceInfo>('devices');
@@ -58,10 +61,22 @@ async function main() {
   router.route(HttpMethod.POST, '/api/v1/users/login', new LoginHandler(userCollection, authenticationHelper));
 
   router.route(HttpMethod.GET, '/api/v1/devices', new GetDevicesHandler(deviceCollection, authenticationHelper));
+  router.route(HttpMethod.GET, '/api/v1/devices/:id', new GetDeviceHandler(deviceCollection, authenticationHelper));
+  router.route(
+    HttpMethod.GET,
+    '/api/v1/devices/:id/data',
+    new GetDeviceDataHandler(dataCollection, authenticationHelper),
+  );
+
   router.route(HttpMethod.POST, '/api/v1/devices', new CreateDeviceHandler(deviceCollection, authenticationHelper));
   router.route(
+    HttpMethod.DELETE,
+    '/api/v1/devices/:id',
+    new DeleteDeviceHandler(deviceCollection, dataCollection, authenticationHelper),
+  );
+  router.route(
     HttpMethod.POST,
-    '/api/v1/devices/codes',
+    '/api/v1/devices/:id/code',
     new CreateDeviceCodeHandler(deviceCollection, deviceCodeCollection, authenticationHelper),
   );
   router.route(
