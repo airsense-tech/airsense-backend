@@ -73,7 +73,7 @@ export class LoginDeviceHandler implements IRouterHandler {
     }
 
     try {
-      await this.collection.deleteOne({ _id: deviceCode._id });
+      await this.collection.deleteMany({ _deviceId: deviceCode._deviceId });
     } catch (error) {
       Log.error('failed to delete device code:', error);
       return InternalServerError();
