@@ -7,12 +7,12 @@ services:
     volumes:
       - air-data:/data/db
     networks:
-      - air-sense
+      - airsense
     ports:
       - 27017:27017
 
 networks:
-  air-sense:
+  airsense:
     name: air-network
     driver: bridge
 

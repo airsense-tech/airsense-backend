@@ -72,14 +72,20 @@ export class GetDeviceDataHandler implements IRouterHandler {
       return IllegalPathParamf('id');
     }
 
-    const oneDayAgo = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+    let since = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+    const queryParamSince = request.queryParam('since');
+    if (queryParamSince && queryParamSince.length > 0) {
+      const newSince = parseInt(queryParamSince[0], 10);
+      since = new Date(newSince);
+    }
 
     const pipeline = [
       {
         $match: {
           _deviceId: deviceId,
           _userId: user.userId,
-          createdOn: { $gte: oneDayAgo },
+          createdOn: { $gte: since },
         },
       },
       {
@@ -110,6 +116,11 @@ export class GetDeviceDataHandler implements IRouterHandler {
         },
       },
       {
+        $sort: {
+          _id: 1,
+        },
+      },
+      {
         $project: {
           _id: 0,
           hour: '$_id.hour',
@@ -117,11 +128,6 @@ export class GetDeviceDataHandler implements IRouterHandler {
           pressure: 1,
           temperature: 1,
           gasResistance: 1,
-        },
-      },
-      {
-        $sort: {
-          hour: 1,
         },
       },
     ];
