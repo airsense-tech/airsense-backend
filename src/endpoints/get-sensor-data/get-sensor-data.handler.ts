@@ -64,6 +64,20 @@ export class GetSensorDataHandler implements IRouterHandler {
         },
       },
       {
+        $project: {
+          _id: 1,
+          _deviceId: 1,
+          humidity: 1,
+          pressure: 1,
+          temperature: 1,
+          gasResistance: 1,
+          year: { $year: '$createdOn' },
+          month: { $month: '$createdOn' },
+          day: { $dayOfMonth: '$createdOn' },
+          hour: { $hour: '$createdOn' },
+        },
+      },
+      {
         $lookup: {
           from: 'devices',
           localField: '_deviceId',
@@ -79,29 +93,53 @@ export class GetSensorDataHandler implements IRouterHandler {
       },
       {
         $group: {
-          _id: '$_deviceId',
+          _id: {
+            _deviceId: '$_deviceId',
+            year: '$year',
+            month: '$month',
+            day: '$day',
+            hour: '$hour',
+          },
           device: { $first: '$device.name' },
-          humidity: { $last: '$humidity' },
-          pressure: { $last: '$pressure' },
-          temperature: { $last: '$temperature' },
-          gasResistance: { $last: '$gasResistance' },
-          createdOn: { $last: '$createdOn' },
+          humidity: { $push: { $avg: '$humidity' } },
+          pressure: { $push: { $avg: '$pressure' } },
+          temperature: { $push: { $avg: '$temperature' } },
+          gasResistance: { $push: { $avg: '$gasResistance' } },
+          lastest: {
+            $last: {
+              humidity: '$humidity',
+              pressure: '$pressure',
+              temperature: '$temperature',
+              gasResistance: '$gasResistance',
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: '$_id._deviceId',
+          device: { $first: '$device' },
+          humidity: { $push: { k: { $toString: '$_id.hour' }, v: { $avg: '$humidity' } } },
+          pressure: { $push: { k: { $toString: '$_id.hour' }, v: { $avg: '$pressure' } } },
+          temperature: { $push: { k: { $toString: '$_id.hour' }, v: { $avg: '$temperature' } } },
+          gasResistance: { $push: { k: { $toString: '$_id.hour' }, v: { $avg: '$gasResistance' } } },
+          lastest: { $last: '$lastest' },
         },
       },
       {
         $project: {
           _id: 0,
-          device: '$device',
-          humidity: '$humidity',
-          pressure: '$pressure',
-          temperature: '$temperature',
-          gasResistance: '$gasResistance',
-          createdOn: '$createdOn',
+          device: 1,
+          lastest: 1,
+          humidity: { $arrayToObject: '$humidity' },
+          pressure: { $arrayToObject: '$pressure' },
+          temperature: { $arrayToObject: '$temperature' },
+          gasResistance: { $arrayToObject: '$gasResistance' },
         },
       },
       {
         $sort: {
-          'device.name': 1,
+          device: 1,
         },
       },
     ];
