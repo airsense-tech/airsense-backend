@@ -1,34 +1,24 @@
+import { validate } from 'class-validator';
 import { Collection } from 'mongodb';
+import { v4 as uuidv4 } from 'uuid';
 import { HttpRequest, IHttpResponse } from '../../core/api';
 import { Log } from '../../core/logging';
 import { IRouterHandler } from '../../core/routing';
 import { AuthenticationHelper } from '../../domain/auth/authentication-helper';
 import { AuthorizationHelper } from '../../domain/auth/authorization-helper';
 import { UserRights } from '../../domain/auth/user-rights';
-import {
-  Forbidden,
-  IllegalPathParamf,
-  IllegalRequestBodyf,
-  InternalServerError,
-  ResourceNotFoundf,
-  Unauthorized,
-} from '../../domain/responses';
-import { DataPointInfo } from '../../models/data-point.info';
-import { DeviceInfo } from '../../models/device.info';
+import { Forbidden, IllegalRequestBodyf, InternalServerError, Unauthorized } from '../../domain/responses';
+import { TriggerInfo } from '../../models/trigger-action.info';
+import { OnCreateTriggerInfo } from './create-trigger.request';
 
 /**
- * The delete device endpoint handler.
+ * The create trigger endpoint handler.
  */
-export class DeleteDeviceHandler implements IRouterHandler {
+export class CreateTriggerHandler implements IRouterHandler {
   /**
-   * The device collection.
+   * The trigger collection.
    */
-  private readonly deviceCollection: Collection<DeviceInfo>;
-
-  /**
-   * The data collection.
-   */
-  private readonly dataCollection: Collection<DataPointInfo>;
+  private readonly collection: Collection<TriggerInfo>;
 
   /**
    * The authentication helper.
@@ -43,16 +33,11 @@ export class DeleteDeviceHandler implements IRouterHandler {
   /**
    * Constructor.
    *
-   * @param deviceCollection The device collection.
+   * @param collection The device collection.
    * @param authenticationHelper The authentication helper.
    */
-  constructor(
-    deviceCollection: Collection<DeviceInfo>,
-    dataCollection: Collection<DataPointInfo>,
-    authenticationHelper: AuthenticationHelper,
-  ) {
-    this.deviceCollection = deviceCollection;
-    this.dataCollection = dataCollection;
+  constructor(collection: Collection<TriggerInfo>, authenticationHelper: AuthenticationHelper) {
+    this.collection = collection;
     this.authenticationHelper = authenticationHelper;
   }
 
@@ -72,7 +57,7 @@ export class DeleteDeviceHandler implements IRouterHandler {
       return Unauthorized();
     }
 
-    const isAuthorized = this.authorizationHelper.isEntitledWith(user.rights, UserRights.DELETE_DEVICE);
+    const isAuthorized = this.authorizationHelper.isEntitledWith(user.rights, UserRights.CREATE_TRIGGER);
     if (!isAuthorized) {
       Log.warn('user not authorized ...');
       return Forbidden();
@@ -83,28 +68,37 @@ export class DeleteDeviceHandler implements IRouterHandler {
       return IllegalRequestBodyf('Expected a request body.');
     }
 
-    const deviceId = request.pathParam('id');
-    if (!deviceId) {
-      Log.warn('missing path parameter ...');
-      return IllegalPathParamf('id');
+    const info = new OnCreateTriggerInfo();
+    Object.assign(info, request.body);
+
+    const errors = await validate(info);
+    if (errors.length > 0) {
+      Log.warn('request body validation failed ...');
+      return IllegalRequestBodyf(errors);
     }
 
+    const device: TriggerInfo = {
+      _id: uuidv4(),
+      _userId: user.userId,
+      _deviceId: user.userId,
+      name: info.name!,
+      postUrl: info.postUrl!,
+      threshold: info.threshold!,
+      paramter: info.paramter!,
+      operator: info.operator!,
+      createdOn: new Date(),
+    };
+
     try {
-      const result = await this.deviceCollection.deleteOne({ _id: deviceId });
-
-      if (result.deletedCount === 0) {
-        Log.warn('trigger not found ...');
-        return ResourceNotFoundf('trigger');
-      }
-
-      await this.dataCollection.deleteMany({ _userId: user.userId, _deviceId: deviceId });
+      await this.collection.insertOne(device);
     } catch (error) {
-      Log.error('failed to delete device:', error);
+      Log.error('failed to create trigger:', error);
       return InternalServerError();
     }
 
     return {
       statusCode: 200,
+      body: device,
     };
   }
 }

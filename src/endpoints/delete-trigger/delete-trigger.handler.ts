@@ -13,22 +13,16 @@ import {
   ResourceNotFoundf,
   Unauthorized,
 } from '../../domain/responses';
-import { DataPointInfo } from '../../models/data-point.info';
-import { DeviceInfo } from '../../models/device.info';
+import { TriggerInfo } from '../../models/trigger-action.info';
 
 /**
- * The delete device endpoint handler.
+ * The delete trigger endpoint handler.
  */
-export class DeleteDeviceHandler implements IRouterHandler {
+export class DeleteTriggerHandler implements IRouterHandler {
   /**
-   * The device collection.
+   * The trigger collection.
    */
-  private readonly deviceCollection: Collection<DeviceInfo>;
-
-  /**
-   * The data collection.
-   */
-  private readonly dataCollection: Collection<DataPointInfo>;
+  private readonly collection: Collection<TriggerInfo>;
 
   /**
    * The authentication helper.
@@ -43,16 +37,11 @@ export class DeleteDeviceHandler implements IRouterHandler {
   /**
    * Constructor.
    *
-   * @param deviceCollection The device collection.
+   * @param collection The trigger collection.
    * @param authenticationHelper The authentication helper.
    */
-  constructor(
-    deviceCollection: Collection<DeviceInfo>,
-    dataCollection: Collection<DataPointInfo>,
-    authenticationHelper: AuthenticationHelper,
-  ) {
-    this.deviceCollection = deviceCollection;
-    this.dataCollection = dataCollection;
+  constructor(collection: Collection<TriggerInfo>, authenticationHelper: AuthenticationHelper) {
+    this.collection = collection;
     this.authenticationHelper = authenticationHelper;
   }
 
@@ -72,7 +61,7 @@ export class DeleteDeviceHandler implements IRouterHandler {
       return Unauthorized();
     }
 
-    const isAuthorized = this.authorizationHelper.isEntitledWith(user.rights, UserRights.DELETE_DEVICE);
+    const isAuthorized = this.authorizationHelper.isEntitledWith(user.rights, UserRights.DELETE_TRIGGER);
     if (!isAuthorized) {
       Log.warn('user not authorized ...');
       return Forbidden();
@@ -83,21 +72,19 @@ export class DeleteDeviceHandler implements IRouterHandler {
       return IllegalRequestBodyf('Expected a request body.');
     }
 
-    const deviceId = request.pathParam('id');
-    if (!deviceId) {
+    const triggerId = request.pathParam('id');
+    if (!triggerId) {
       Log.warn('missing path parameter ...');
       return IllegalPathParamf('id');
     }
 
     try {
-      const result = await this.deviceCollection.deleteOne({ _id: deviceId });
+      const result = await this.collection.deleteOne({ _id: triggerId });
 
       if (result.deletedCount === 0) {
         Log.warn('trigger not found ...');
         return ResourceNotFoundf('trigger');
       }
-
-      await this.dataCollection.deleteMany({ _userId: user.userId, _deviceId: deviceId });
     } catch (error) {
       Log.error('failed to delete device:', error);
       return InternalServerError();
