@@ -10,7 +10,7 @@ import { AuthorizationHelper } from '../../domain/auth/authorization-helper';
 import { UserRights } from '../../domain/auth/user-rights';
 import { Forbidden, IllegalRequestBodyf, InternalServerError, Unauthorized } from '../../domain/responses/functors';
 import { DataPointInfo } from '../../models/data-point.info';
-import { TriggerInfo } from '../../models/trigger-action.info';
+import { TriggerInfo } from '../../models/trigger.info';
 import { OnCreateDataPointInfo } from './create-data-point.request';
 
 export interface ITriggerEvaluator {
@@ -198,7 +198,7 @@ export class CreateDataPointHandler implements IRouterHandler {
    * @returns The value of the requested parameter.
    */
   private getDataPointParameterForTrigger(dataPoint: DataPointInfo, trigger: TriggerInfo): number | undefined {
-    switch (trigger.paramter) {
+    switch (trigger.parameter) {
       case 'humidity':
         return dataPoint.humidity;
       case 'pressure':

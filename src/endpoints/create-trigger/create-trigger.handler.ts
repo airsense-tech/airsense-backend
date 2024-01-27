@@ -7,8 +7,14 @@ import { IRouterHandler } from '../../core/routing';
 import { AuthenticationHelper } from '../../domain/auth/authentication-helper';
 import { AuthorizationHelper } from '../../domain/auth/authorization-helper';
 import { UserRights } from '../../domain/auth/user-rights';
-import { Forbidden, IllegalRequestBodyf, InternalServerError, Unauthorized } from '../../domain/responses';
-import { TriggerInfo } from '../../models/trigger-action.info';
+import {
+  Forbidden,
+  IllegalPathParamf,
+  IllegalRequestBodyf,
+  InternalServerError,
+  Unauthorized,
+} from '../../domain/responses';
+import { TriggerInfo } from '../../models/trigger.info';
 import { OnCreateTriggerInfo } from './create-trigger.request';
 
 /**
@@ -33,7 +39,7 @@ export class CreateTriggerHandler implements IRouterHandler {
   /**
    * Constructor.
    *
-   * @param collection The device collection.
+   * @param collection The trigger collection.
    * @param authenticationHelper The authentication helper.
    */
   constructor(collection: Collection<TriggerInfo>, authenticationHelper: AuthenticationHelper) {
@@ -68,6 +74,12 @@ export class CreateTriggerHandler implements IRouterHandler {
       return IllegalRequestBodyf('Expected a request body.');
     }
 
+    const deviceId = request.pathParam('id');
+    if (!deviceId) {
+      Log.warn('missing path parameter ...');
+      return IllegalPathParamf('id');
+    }
+
     const info = new OnCreateTriggerInfo();
     Object.assign(info, request.body);
 
@@ -77,20 +89,20 @@ export class CreateTriggerHandler implements IRouterHandler {
       return IllegalRequestBodyf(errors);
     }
 
-    const device: TriggerInfo = {
+    const trigger: TriggerInfo = {
       _id: uuidv4(),
       _userId: user.userId,
-      _deviceId: user.userId,
+      _deviceId: deviceId,
       name: info.name!,
       postUrl: info.postUrl!,
       threshold: info.threshold!,
-      paramter: info.paramter!,
+      parameter: info.parameter!,
       operator: info.operator!,
       createdOn: new Date(),
     };
 
     try {
-      await this.collection.insertOne(device);
+      await this.collection.insertOne(trigger);
     } catch (error) {
       Log.error('failed to create trigger:', error);
       return InternalServerError();
@@ -98,7 +110,7 @@ export class CreateTriggerHandler implements IRouterHandler {
 
     return {
       statusCode: 200,
-      body: device,
+      body: trigger,
     };
   }
 }

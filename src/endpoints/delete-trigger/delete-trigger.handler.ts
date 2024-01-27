@@ -13,7 +13,7 @@ import {
   ResourceNotFoundf,
   Unauthorized,
 } from '../../domain/responses';
-import { TriggerInfo } from '../../models/trigger-action.info';
+import { TriggerInfo } from '../../models/trigger.info';
 
 /**
  * The delete trigger endpoint handler.

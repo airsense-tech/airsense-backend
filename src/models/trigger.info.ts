@@ -35,7 +35,7 @@ export interface TriggerInfo {
   /**
    * The parameter to compare.
    */
-  paramter: 'humidity' | 'pressure' | 'temperature' | 'gasResistance';
+  parameter: 'humidity' | 'pressure' | 'temperature' | 'gasResistance';
 
   /**
    * The operator used to compare the threshold.
