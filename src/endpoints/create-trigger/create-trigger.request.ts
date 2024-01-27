@@ -25,7 +25,7 @@ export class OnCreateTriggerInfo {
   public threshold: number | undefined;
 
   @IsEnum(ParamterInfo)
-  public paramter: 'humidity' | 'pressure' | 'temperature' | 'gasResistance' | undefined;
+  public parameter: 'humidity' | 'pressure' | 'temperature' | 'gasResistance' | undefined;
 
   @IsEnum(OperatorInfo)
   public operator: 'gt' | 'gte' | 'lt' | 'lte' | undefined;

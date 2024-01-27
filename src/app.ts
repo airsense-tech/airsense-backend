@@ -17,7 +17,7 @@ import { LoginDeviceHandler } from './endpoints/login-device/login-device.handle
 import { DataPointInfo } from './models/data-point.info';
 import { DeviceCodeInfo } from './models/device-code.info';
 import { DeviceInfo } from './models/device.info';
-import { TriggerInfo } from './models/trigger-action.info';
+import { TriggerInfo } from './models/trigger.info';
 import { UserInfo } from './models/user.info';
 
 async function main() {
@@ -87,10 +87,14 @@ async function main() {
     new LoginDeviceHandler(deviceCodeCollection, authenticationHelper),
   );
 
-  router.route(HttpMethod.POST, '/api/v1/triggers', new CreateTriggerHandler(triggerCollection, authenticationHelper));
+  router.route(
+    HttpMethod.POST,
+    '/api/v1/devices/:id/trigger',
+    new CreateTriggerHandler(triggerCollection, authenticationHelper),
+  );
   router.route(
     HttpMethod.DELETE,
-    '/api/v1/triggers/:id',
+    '/api/v1/devices/:id/trigger',
     new DeleteTriggerHandler(triggerCollection, authenticationHelper),
   );
 
