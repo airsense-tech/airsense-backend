@@ -23,6 +23,6 @@
     }
   },
   "forwardPorts": [7325],
-  "runArgs": ["--network=host", "--name=air-sense-dev-container"],
+  "runArgs": ["--network=host", "--name=airsense-dev-container"],
   "postCreateCommand": "npm install"
 }

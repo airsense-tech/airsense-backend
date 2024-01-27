@@ -6,8 +6,9 @@ import { AuthenticationHelper } from './domain/auth/authentication-helper';
 import { CreateDataPointHandler, LoginHandler, RegistrationHandler } from './endpoints';
 import { CreateDeviceCodeHandler } from './endpoints/create-device-code/create-device-code.handler';
 import { CreateDeviceHandler } from './endpoints/create-device/create-device.handler';
+import { CreateTriggerHandler } from './endpoints/create-trigger/create-trigger.handler';
 import { DeleteDeviceHandler } from './endpoints/delete-device/delete-device.handler';
-import { GetDataPointHandler } from './endpoints/get-data-points/get-data-points.handler';
+import { DeleteTriggerHandler } from './endpoints/delete-trigger/delete-trigger.handler';
 import { GetDeviceDataHandler } from './endpoints/get-device-data/get-device-data.handler';
 import { GetDeviceHandler } from './endpoints/get-device/get-device.handler';
 import { GetDevicesHandler } from './endpoints/get-devices/get-devices.handler';
@@ -16,6 +17,7 @@ import { LoginDeviceHandler } from './endpoints/login-device/login-device.handle
 import { DataPointInfo } from './models/data-point.info';
 import { DeviceCodeInfo } from './models/device-code.info';
 import { DeviceInfo } from './models/device.info';
+import { TriggerInfo } from './models/trigger-action.info';
 import { UserInfo } from './models/user.info';
 
 async function main() {
@@ -51,6 +53,7 @@ async function main() {
   const deviceCollection = db.collection<DeviceInfo>('devices');
   const deviceCodeCollection = db.collection<DeviceCodeInfo>('deviceCodes');
   const dataCollection = db.collection<DataPointInfo>('data');
+  const triggerCollection = db.collection<TriggerInfo>('triggers');
 
   Log.info('launching router engine ...');
 
@@ -67,7 +70,6 @@ async function main() {
     '/api/v1/devices/:id/data',
     new GetDeviceDataHandler(dataCollection, authenticationHelper),
   );
-
   router.route(HttpMethod.POST, '/api/v1/devices', new CreateDeviceHandler(deviceCollection, authenticationHelper));
   router.route(
     HttpMethod.DELETE,
@@ -85,9 +87,19 @@ async function main() {
     new LoginDeviceHandler(deviceCodeCollection, authenticationHelper),
   );
 
-  router.route(HttpMethod.POST, '/api/v1/data', new CreateDataPointHandler(dataCollection, authenticationHelper));
+  router.route(HttpMethod.POST, '/api/v1/triggers', new CreateTriggerHandler(triggerCollection, authenticationHelper));
+  router.route(
+    HttpMethod.DELETE,
+    '/api/v1/triggers/:id',
+    new DeleteTriggerHandler(triggerCollection, authenticationHelper),
+  );
 
-  router.route(HttpMethod.GET, '/api/v1/sensors/avg', new GetDataPointHandler(dataCollection, authenticationHelper));
+  router.route(
+    HttpMethod.POST,
+    '/api/v1/data',
+    new CreateDataPointHandler(dataCollection, triggerCollection, authenticationHelper),
+  );
+
   router.route(
     HttpMethod.GET,
     '/api/v1/sensors/latest',
