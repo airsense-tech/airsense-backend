@@ -86,6 +86,7 @@ export class LoginHandler implements IRouterHandler {
         UserRights.READ_DEVICE,
         UserRights.CREATE_DEVICE,
         UserRights.DELETE_DEVICE,
+        UserRights.READ_TRIGGER,
         UserRights.CREATE_TRIGGER,
         UserRights.DELETE_TRIGGER,
       ],

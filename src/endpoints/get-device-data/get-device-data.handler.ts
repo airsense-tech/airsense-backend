@@ -99,6 +99,7 @@ export class GetDeviceDataHandler implements IRouterHandler {
           month: { $month: '$createdOn' },
           day: { $dayOfMonth: '$createdOn' },
           hour: { $hour: '$createdOn' },
+          minute: { $minute: '$createdOn' },
         },
       },
       {
@@ -108,6 +109,7 @@ export class GetDeviceDataHandler implements IRouterHandler {
             month: '$month',
             day: '$day',
             hour: '$hour',
+            minute: '$minute',
           },
           humidity: { $avg: '$humidity' },
           pressure: { $avg: '$pressure' },
