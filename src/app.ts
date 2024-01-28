@@ -13,6 +13,7 @@ import { GetDeviceDataHandler } from './endpoints/get-device-data/get-device-dat
 import { GetDeviceHandler } from './endpoints/get-device/get-device.handler';
 import { GetDevicesHandler } from './endpoints/get-devices/get-devices.handler';
 import { GetSensorDataHandler } from './endpoints/get-sensor-data/get-sensor-data.handler';
+import { GetTriggersHandler } from './endpoints/get-triggers/get-triggers.handler';
 import { LoginDeviceHandler } from './endpoints/login-device/login-device.handler';
 import { DataPointInfo } from './models/data-point.info';
 import { DeviceCodeInfo } from './models/device-code.info';
@@ -55,6 +56,8 @@ async function main() {
   const dataCollection = db.collection<DataPointInfo>('data');
   const triggerCollection = db.collection<TriggerInfo>('triggers');
 
+  deviceCodeCollection.createIndex({ createdOn: 1 }, { expireAfterSeconds: 60 * 60 * 24 });
+
   Log.info('launching router engine ...');
 
   const router = new ExpressRouter();
@@ -88,13 +91,18 @@ async function main() {
   );
 
   router.route(
+    HttpMethod.GET,
+    '/api/v1/devices/:id/triggers',
+    new GetTriggersHandler(triggerCollection, authenticationHelper),
+  );
+  router.route(
     HttpMethod.POST,
     '/api/v1/devices/:id/trigger',
     new CreateTriggerHandler(triggerCollection, authenticationHelper),
   );
   router.route(
     HttpMethod.DELETE,
-    '/api/v1/devices/:id/trigger',
+    '/api/v1/triggers/:id',
     new DeleteTriggerHandler(triggerCollection, authenticationHelper),
   );
 

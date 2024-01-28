@@ -19,6 +19,11 @@ export enum UserRights {
   DELETE_DEVICE = 'delete-device',
 
   /**
+   * The user is allowed to read all device triggers.
+   */
+  READ_TRIGGER = 'read-trigger',
+
+  /**
    * The user is allowed to create device triggers.
    */
   CREATE_TRIGGER = 'create-trigger',
