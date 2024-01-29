@@ -125,11 +125,19 @@ export class GetDeviceDataHandler implements IRouterHandler {
       {
         $project: {
           _id: 0,
-          hour: '$_id.hour',
           humidity: 1,
           pressure: 1,
           temperature: 1,
           gasResistance: 1,
+          createdOn: {
+            $dateFromParts: {
+              year: '$_id.year',
+              month: '$_id.month',
+              day: '$_id.day',
+              hour: '$_id.hour',
+              minute: '$_id.minute',
+            },
+          },
         },
       },
     ];

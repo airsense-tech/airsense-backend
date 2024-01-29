@@ -94,17 +94,10 @@ export class GetSensorDataHandler implements IRouterHandler {
       {
         $group: {
           _id: {
-            _deviceId: '$_deviceId',
-            year: '$year',
-            month: '$month',
-            day: '$day',
-            hour: '$hour',
+            deviceId: '$device._id',
+            deviceName: '$device.name',
+            createdOn: '$createdOn',
           },
-          device: { $first: '$device.name' },
-          humidity: { $push: { $avg: '$humidity' } },
-          pressure: { $push: { $avg: '$pressure' } },
-          temperature: { $push: { $avg: '$temperature' } },
-          gasResistance: { $push: { $avg: '$gasResistance' } },
           lastest: {
             $last: {
               humidity: '$humidity',
@@ -116,25 +109,13 @@ export class GetSensorDataHandler implements IRouterHandler {
         },
       },
       {
-        $group: {
-          _id: '$_id._deviceId',
-          device: { $first: '$device' },
-          humidity: { $push: { k: { $toString: '$_id.hour' }, v: { $avg: '$humidity' } } },
-          pressure: { $push: { k: { $toString: '$_id.hour' }, v: { $avg: '$pressure' } } },
-          temperature: { $push: { k: { $toString: '$_id.hour' }, v: { $avg: '$temperature' } } },
-          gasResistance: { $push: { k: { $toString: '$_id.hour' }, v: { $avg: '$gasResistance' } } },
-          lastest: { $last: '$lastest' },
-        },
-      },
-      {
         $project: {
           _id: 0,
-          device: 1,
-          lastest: 1,
-          humidity: { $arrayToObject: '$humidity' },
-          pressure: { $arrayToObject: '$pressure' },
-          temperature: { $arrayToObject: '$temperature' },
-          gasResistance: { $arrayToObject: '$gasResistance' },
+          device: '$_id.deviceName',
+          humidity: '$lastest.humidity',
+          pressure: '$lastest.pressure',
+          temperature: '$lastest.temperature',
+          gasResistance: '$lastest.gasResistance',
         },
       },
       {
