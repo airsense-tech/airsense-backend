@@ -1,0 +1,110 @@
+# The docker build pipeline.
+name: Build And Push Docker Image
+
+# Pipeline triggers.
+on:
+  # Trigger the pipeline on push events to the specified branches.
+  push:
+    # Branches to trigger the pipeline on.
+    branches:
+      - main
+      - dev
+      - release/*
+
+# Predefined environment variables.
+env:
+  # The container registry host.
+  CONTAINER_REGISTRY: ghcr.io
+
+  # The container image name.
+  CONTAINER_IMAGE_NAME: ${{ github.repository }}
+
+# Run all jobs in bash per default.
+defaults:
+  # Specifies the default shell runner.
+  run:
+    # Use bash as the default shell.
+    shell: bash
+
+# Pipeline jobs.
+jobs:
+  # The docker build job.
+  docker:
+    # The name of the job.
+    name: Docker
+
+    # Runs the job on the latest version of Ubuntu.
+    runs-on: ubuntu-latest
+
+    # Specifies the job permissions.
+    permissions:
+      # Allow the job to read from the repository.
+      contents: read
+
+      # Allow the job to write to the package registry.
+      packages: write
+
+    # The job steps.
+    steps:
+      # Checkout the repository.
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Set the container tag based on the branch.
+      - name: Evaluate Docker Container Tag
+        run: |
+          # set container tag to 'latest' for main branch
+          if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
+            echo "CONTAINER_TAG=latest" >> $GITHUB_ENV
+
+          # set container tag to 'dev' for main branch
+          elif [[ ${{ github.ref }} == 'refs/heads/dev' ]]; then
+            echo "CONTAINER_TAG=dev" >> $GITHUB_ENV
+
+          # use version file for release branches
+          elif [[ ${{ github.ref }} == 'refs/heads/release/'* ]]; then
+            VERSION=$(cat version)
+            echo "CONTAINER_TAG=$VERSION" >> $GITHUB_ENV
+
+          # use branch name otherwise
+          elif [[ ${{ github.ref }} == 'refs/heads/release/'* ]]; then
+            CURRENT_BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
+            echo "CONTAINER_TAG=$CURRENT_BRANCH" >> $GITHUB_ENV
+          fi
+
+      # Setup Qemu for cross compilation.
+      - name: Setup Qemu
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/amd64,linux/arm64/v8
+
+      # Setup Docker Buildx.
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Login to the container registry.
+      - name: Container Registry Authentication
+        uses: docker/login-action@v2
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ env.CONTAINER_REGISTRY }}
+
+      # Extract the docker metadata.
+      - name: Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          tags: ${{ env.CONTAINER_TAG }}
+          images: ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_IMAGE_NAME }}
+
+      # Build and push the docker image.
+      - name: Build And Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          provenance: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64/v8

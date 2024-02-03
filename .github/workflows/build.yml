@@ -1,0 +1,56 @@
+# The build pipeline.
+name: Build And Lint
+
+# Pipeline triggers.
+on:
+  # Trigger the pipeline on push events to the specified branches.
+  push:
+    # Branches to trigger the pipeline on.
+    branches:
+      - feature/*
+
+# Run all jobs in bash per default.
+defaults:
+  # Specifies the default shell runner.
+  run:
+    # Use bash as the default shell.
+    shell: bash
+
+# Pipeline jobs.
+jobs:
+  # The build job.
+  build:
+    # The name of the job.
+    name: Build
+
+    # Runs the job on the latest version of Ubuntu.
+    runs-on: ubuntu-latest
+
+    # Specifies the job permissions.
+    permissions:
+      # Allow the job to read from the repository.
+      contents: read
+
+    # The job steps.
+    steps:
+      # Checkout the repository.
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Install Node.js.
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      # Install node modules.
+      - name: Install Dependencies
+        run: npm install
+
+      # Lint source code.
+      - name: Lint Code
+        run: npm run lint
+
+      # Build source code.
+      - name: Build Code
+        run: npm run build
